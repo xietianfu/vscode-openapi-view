@@ -165,7 +165,58 @@ function getHtmlForWebview(webview, extensionUri, openApiContent, configRawConte
             .hidden { display: none; }
             .arrow { transition: transform 0.2s; font-size: 0.8em; }
             .collapsed .arrow { transform: rotate(-90deg); }
-            pre { margin: 0; }
+            .schema-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9em;
+            }
+            .schema-table th, .schema-table td {
+                padding: 6px 10px;
+                border-bottom: 1px solid var(--border-color);
+                text-align: left;
+                vertical-align: top;
+            }
+            .schema-table th {
+                background: var(--sidebar-bg);
+                font-weight: 600;
+            }
+            .schema-row-name {
+                font-family: monospace;
+                color: var(--text-color);
+                font-weight: bold;
+            }
+            .schema-row-type {
+                color: #4ec9b0;
+                font-family: monospace;
+            }
+            .schema-row-required {
+                color: #f48771;
+                font-size: 0.8em;
+                font-weight: bold;
+            }
+            .schema-toggle {
+                cursor: pointer;
+                user-select: none;
+                margin-right: 5px;
+                display: inline-block;
+                width: 12px;
+                text-align: center;
+                transition: transform 0.1s;
+            }
+            .schema-toggle.collapsed {
+                transform: rotate(-90deg);
+            }
+            .schema-toggle.hidden {
+                visibility: hidden;
+            }
+            .indent-guide {
+                display: inline-block;
+                width: 20px;
+                height: 100%;
+                border-left: 1px dashed var(--border-color);
+                margin-right: 2px;
+                vertical-align: middle;
+            }
         </style>
     </head>
     <body>
@@ -342,7 +393,7 @@ function getHtmlForWebview(webview, extensionUri, openApiContent, configRawConte
                             html += \`<div style="margin-bottom: 5px; font-weight: bold; margin-top: 10px;">Media Type: \${type}</div>\`;
                             const schema = content[type].schema;
                             if (schema) {
-                                html += \`<pre style="background: var(--code-bg); padding: 10px; overflow: auto; border-radius: 4px;">\${formatSchema(schema)}</pre>\`;
+                                html += renderSchemaTable(schema, 'root');
                             }
                         }
                     }
@@ -351,17 +402,18 @@ function getHtmlForWebview(webview, extensionUri, openApiContent, configRawConte
                 // Responses
                 if (op.responses) {
                     html += \`<div class="section-title">Responses</div>\`;
-                    html += \`<table><thead><tr><th style="width: 15%">Code</th><th>Description</th></tr></thead><tbody>\`;
+                    
                     for (const code in op.responses) {
-                        html += \`<tr>
-                            <td><strong>\${code}</strong></td>
-                            <td>
-                                <div>\${op.responses[code].description || ''}</div>
+                        html += \`<div style="margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+                            <div style="padding: 8px 10px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
+                                <span style="font-weight: bold; font-family: monospace; font-size: 1.1em;">\${code}</span>
+                                <span style="opacity: 0.8;">\${op.responses[code].description || ''}</span>
+                            </div>
+                            <div style="padding: 10px;">
                                 \${renderResponseSchema(op.responses[code])}
-                            </td>
-                        </tr>\`;
+                            </div>
+                        </div>\`;
                     }
-                    html += \`</tbody></table>\`;
                 }
                 
                 mainContent.innerHTML = html;
@@ -374,13 +426,132 @@ function getHtmlForWebview(webview, extensionUri, openApiContent, configRawConte
                 for (const type in response.content) {
                     const schema = response.content[type].schema;
                     if (schema) {
-                         html += \`<div style="margin-top: 5px; font-size: 0.9em; opacity: 0.8;">Schema (\${type}):</div>
-                         <pre style="background: var(--code-bg); padding: 5px; margin-top: 5px; overflow: auto; border-radius: 3px;">\${formatSchema(schema)}</pre>\`;
+                         html += \`<div style="margin-top: 5px; font-size: 0.9em; opacity: 0.8;">Schema (\${type}):</div>\`;
+                         html += renderSchemaTable(schema, 'root');
                     }
                 }
                 return html;
             }
             
+            function renderSchemaTable(schema, rootName = 'root') {
+                const resolved = resolveDeep(schema);
+                if (!resolved) return '<div class="error">Invalid Schema</div>';
+
+                // If it's a primitive type, just show it simply
+                if (resolved.type !== 'object' && resolved.type !== 'array' && !resolved.properties) {
+                     return \`<div style="background: var(--code-bg); padding: 10px; border-radius: 4px; font-family: monospace;">
+                        <span style="color: #4ec9b0;">\${resolved.type || 'unknown'}</span> 
+                        \${resolved.format ? \`(\${resolved.format})\` : ''}
+                        \${resolved.description ? \`- \${resolved.description}\` : ''}
+                     </div>\`;
+                }
+
+                let rows = '';
+                let idCounter = 0;
+
+                function generateRows(obj, name, level, parentId = null, required = false) {
+                    const id = \`row-\${Math.random().toString(36).substr(2, 9)}\`;
+                    const hasChildren = (obj.type === 'object' && obj.properties) || (obj.type === 'array' && obj.items);
+                    const isCircular = obj._circular;
+                    
+                    let typeDisplay = obj.type || 'object';
+                    if (obj.format) typeDisplay += \` (\${obj.format})\`;
+                    if (obj.items && obj.items.type) typeDisplay += \`[\${obj.items.type}]\`;
+                    if (isCircular) typeDisplay += ' (Circular)';
+                    if (obj._ref) {
+                         const refName = obj._ref.split('/').pop();
+                         typeDisplay += \` <span style="opacity:0.6; font-size:0.8em">&lt;\${refName}&gt;</span>\`;
+                    }
+
+                    const indent = level > 0 ? \`<span style="padding-left: \${level * 20}px"></span>\` : '';
+                    const toggle = hasChildren && !isCircular
+                        ? \`<span class="schema-toggle" data-id="\${id}">▼</span>\` 
+                        : \`<span class="schema-toggle hidden">▼</span>\`;
+
+                    const rowClass = parentId ? \`child-of-\${parentId}\` : '';
+                    
+                    rows += \`<tr class="schema-row \${rowClass}" id="\${id}" data-level="\${level}">
+                        <td>
+                            \${indent}\${toggle}
+                            <span class="schema-row-name">\${name}</span>
+                        </td>
+                        <td class="schema-row-type">\${typeDisplay}</td>
+                        <td class="schema-row-required">\${required ? 'Required' : ''}</td>
+                        <td>\${obj.description || '-'}</td>
+                    </tr>\`;
+
+                    if (hasChildren && !isCircular) {
+                        if (obj.type === 'object' && obj.properties) {
+                            for (const key in obj.properties) {
+                                const prop = obj.properties[key];
+                                const isReq = obj.required && Array.isArray(obj.required) && obj.required.includes(key);
+                                generateRows(prop, key, level + 1, id, isReq);
+                            }
+                        } else if (obj.type === 'array' && obj.items) {
+                            generateRows(obj.items, 'items', level + 1, id, false);
+                        }
+                    }
+                }
+
+                generateRows(resolved, rootName, 0);
+
+                return \`<table class="schema-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 35%">Name</th>
+                            <th style="width: 20%">Type</th>
+                            <th style="width: 10%">Required</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>\${rows}</tbody>
+                </table>\`;
+            }
+
+            // Global toggle function
+            function toggleRow(id) {
+                const row = document.getElementById(id);
+                if (!row) return;
+                const toggle = row.querySelector('.schema-toggle');
+                
+                if (toggle.classList.contains('collapsed')) {
+                    toggle.classList.remove('collapsed');
+                    showChildren(id);
+                } else {
+                    toggle.classList.add('collapsed');
+                    hideChildren(id);
+                }
+            };
+            
+            // Event Delegation for toggles
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('schema-toggle')) {
+                    const id = e.target.dataset.id;
+                    if (id) toggleRow(id);
+                }
+            });
+
+            function hideChildren(parentId) {
+                const children = document.querySelectorAll(\`.child-of-\${parentId}\`);
+                children.forEach(child => {
+                    child.style.display = 'none';
+                    if (child.querySelector('.schema-toggle:not(.collapsed)')) {
+                         hideChildren(child.id);
+                    }
+                });
+            }
+
+            function showChildren(parentId) {
+                const children = document.querySelectorAll(\`.child-of-\${parentId}\`);
+                children.forEach(child => {
+                    child.style.display = 'table-row';
+                    const toggle = child.querySelector('.schema-toggle');
+                    if (toggle && !toggle.classList.contains('collapsed')) {
+                        showChildren(child.id);
+                    }
+                });
+            }
+
             function formatSchema(schema) {
                 try {
                     const resolved = resolveDeep(schema);
