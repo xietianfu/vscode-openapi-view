@@ -1,16 +1,35 @@
-const navList = document.getElementById('nav-list');
-const mainContent = document.getElementById('main-content');
-const searchInput = document.getElementById('search-input');
+let navList, mainContent, searchInput;
 
-// Initialize
-if (!window.spec || !window.spec.paths) {
-    mainContent.innerHTML = '<div style="padding: 20px; color: var(--vscode-errorForeground);">No paths found in OpenAPI spec or failed to parse.</div>';
-} else {
-    renderNavigation(window.spec);
+function init() {
+    navList = document.getElementById('nav-list');
+    mainContent = document.getElementById('main-content');
+    searchInput = document.getElementById('search-input');
     
-    searchInput.addEventListener('input', (e) => {
-        filterNavigation(e.target.value);
-    });
+    console.log('OpenAPI Preview Init');
+    console.log('Spec:', window.spec ? 'Found' : 'Missing');
+
+    if (!window.spec || !window.spec.paths) {
+        if (mainContent) {
+             mainContent.innerHTML = '<div style="padding: 20px; color: var(--vscode-errorForeground);">No paths found in OpenAPI spec or failed to parse.</div>';
+        } else {
+            console.error('Main content element not found');
+        }
+    } else {
+        renderNavigation(window.spec);
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                filterNavigation(e.target.value);
+            });
+        }
+    }
+}
+
+// Run init when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
 }
 
 function renderNavigation(spec) {

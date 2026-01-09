@@ -4,16 +4,25 @@ exports.getHtmlForWebview = void 0;
 const vscode = require("vscode");
 const nunjucks = require("nunjucks");
 const path = require("path");
+const fs = require("fs");
 function getHtmlForWebview(webview, extensionUri, openApiContent, configRawContent) {
     const nonce = getNonce();
     // Paths
     const stylePath = vscode.Uri.joinPath(extensionUri, 'resources', 'view', 'preview.css');
-    const styleUri = webview.asWebviewUri(stylePath);
     const scriptPath = vscode.Uri.joinPath(extensionUri, 'resources', 'view', 'preview.js');
-    const scriptUri = webview.asWebviewUri(scriptPath);
     const templatePath = path.join(extensionUri.fsPath, 'resources', 'templates');
+    // Read resources content
+    let styleContent = '';
+    let scriptContent = '';
+    try {
+        styleContent = fs.readFileSync(stylePath.fsPath, 'utf-8');
+        scriptContent = fs.readFileSync(scriptPath.fsPath, 'utf-8');
+    }
+    catch (e) {
+        console.error('Failed to read preview resources', e);
+    }
     // Configure Nunjucks
-    nunjucks.configure(templatePath, { autoescape: true });
+    nunjucks.configure(templatePath, { autoescape: true, noCache: true });
     // Normalize config content
     let injectedConfig = configRawContent;
     if (injectedConfig.includes('module.exports')) {
@@ -30,8 +39,8 @@ function getHtmlForWebview(webview, extensionUri, openApiContent, configRawConte
         return nunjucks.render('webview.njk', {
             cspSource: webview.cspSource,
             nonce: nonce,
-            styleUri: styleUri.toString(),
-            scriptUri: scriptUri.toString(),
+            styleContent: styleContent,
+            scriptContent: scriptContent,
             openApiContent: openApiContent,
             configRawContent: injectedConfig
         });

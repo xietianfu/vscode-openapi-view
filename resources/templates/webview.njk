@@ -5,7 +5,9 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{ cspSource }} 'unsafe-inline'; script-src 'nonce-{{ nonce }}';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenAPI Preview</title>
-    <link href="{{ styleUri }}" rel="stylesheet">
+    <style>
+        {{ styleContent | safe }}
+    </style>
 </head>
 <body>
     <div id="sidebar">
@@ -31,7 +33,9 @@
             console.error("Failed to load user config", e);
             window.openapiConfig = {};
         }
+
+        // Injected Scripts
+        {{ scriptContent | safe }}
     </script>
-    <script nonce="{{ nonce }}" src="{{ scriptUri }}"></script>
 </body>
 </html>
