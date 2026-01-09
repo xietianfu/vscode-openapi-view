@@ -1,20 +1,31 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
-export function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri, openApiContent: string, configRawContent: string): string {
-    const nonce = getNonce();
+export function getHtmlForWebview(
+  webview: vscode.Webview,
+  extensionUri: vscode.Uri,
+  openApiContent: string,
+  configRawContent: string
+): string {
+  const nonce = getNonce();
 
-    // Normalize config content
-    let injectedConfig = configRawContent;
-    if (injectedConfig.includes('module.exports')) {
-        injectedConfig = injectedConfig.replace('module.exports', 'window.openapiConfig');
-    } else if (injectedConfig.includes('export default')) {
-        injectedConfig = injectedConfig.replace('export default', 'window.openapiConfig =');
-    }
-    if (!injectedConfig.trim()) {
-        injectedConfig = "window.openapiConfig = {};";
-    }
+  // Normalize config content
+  let injectedConfig = configRawContent;
+  if (injectedConfig.includes("module.exports")) {
+    injectedConfig = injectedConfig.replace(
+      "module.exports",
+      "window.openapiConfig"
+    );
+  } else if (injectedConfig.includes("export default")) {
+    injectedConfig = injectedConfig.replace(
+      "export default",
+      "window.openapiConfig ="
+    );
+  }
+  if (!injectedConfig.trim()) {
+    injectedConfig = "window.openapiConfig = {};";
+  }
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
@@ -165,7 +176,57 @@ export function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.
             .hidden { display: none; }
             .arrow { transition: transform 0.2s; font-size: 0.8em; }
             .collapsed .arrow { transform: rotate(-90deg); }
-            pre { margin: 0; }
+            .schema-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9em;
+            }
+            .schema-table th, .schema-table td {
+                padding: 6px 10px;
+                border-bottom: 1px solid var(--border-color);
+                text-align: left;
+                vertical-align: top;
+            }
+            .schema-table th {
+                background: var(--sidebar-bg);
+                font-weight: 600;
+            }
+            .schema-row-name {
+                font-family: monospace;
+                color: var(--active-text);
+            }
+            .schema-row-type {
+                color: #4ec9b0;
+                font-family: monospace;
+            }
+            .schema-row-required {
+                color: #f48771;
+                font-size: 0.8em;
+                font-weight: bold;
+            }
+            .schema-toggle {
+                cursor: pointer;
+                user-select: none;
+                margin-right: 5px;
+                display: inline-block;
+                width: 12px;
+                text-align: center;
+                transition: transform 0.1s;
+            }
+            .schema-toggle.collapsed {
+                transform: rotate(-90deg);
+            }
+            .schema-toggle.hidden {
+                visibility: hidden;
+            }
+            .indent-guide {
+                display: inline-block;
+                width: 20px;
+                height: 100%;
+                border-left: 1px dashed var(--border-color);
+                margin-right: 2px;
+                vertical-align: middle;
+            }
         </style>
     </head>
     <body>
@@ -383,10 +444,54 @@ export function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.
             
             function formatSchema(schema) {
                 try {
-                    return JSON.stringify(schema, null, 2);
+                    const resolved = resolveDeep(schema);
+                    return JSON.stringify(resolved, null, 2);
                 } catch(e) {
+                    console.error('Format schema error', e);
                     return 'Invalid Schema';
                 }
+            }
+
+            function resolveDeep(schema, visited = new Set()) {
+                if (!schema || typeof schema !== 'object') return schema;
+                
+                // Check for $ref
+                if (schema.$ref && typeof schema.$ref === 'string') {
+                    if (visited.has(schema.$ref)) {
+                        return { $ref: schema.$ref, _circular: true };
+                    }
+                    
+                    const refPath = schema.$ref;
+                    if (refPath.startsWith('#/')) {
+                        const parts = refPath.substring(2).split('/');
+                        let current = spec;
+                        for (const part of parts) {
+                            current = current && current[part];
+                        }
+                        
+                        if (current) {
+                            const newVisited = new Set(visited);
+                            newVisited.add(refPath);
+                            const resolved = resolveDeep(current, newVisited);
+                            // Inject source ref info if it's an object to help user identify the schema
+                            if (resolved && typeof resolved === 'object' && !Array.isArray(resolved)) {
+                                return Object.assign({ _ref: refPath }, resolved);
+                            }
+                            return resolved;
+                        }
+                    }
+                }
+                
+                // Recursively resolve properties if it's an object/array
+                if (Array.isArray(schema)) {
+                    return schema.map(item => resolveDeep(item, visited));
+                }
+                
+                const result = {};
+                for (const key in schema) {
+                    result[key] = resolveDeep(schema[key], visited);
+                }
+                return result;
             }
 
             // Handle messages from extension
@@ -417,10 +522,11 @@ export function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.
 }
 
 function getNonce() {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
+  let text = "";
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
 }

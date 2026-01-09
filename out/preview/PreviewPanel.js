@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PreviewPanel = void 0;
 const vscode = require("vscode");
+const yaml = require("js-yaml");
 const HtmlGenerator_1 = require("./HtmlGenerator");
 const ConfigLoader_1 = require("../config/ConfigLoader");
 class PreviewPanel {
@@ -30,10 +31,10 @@ class PreviewPanel {
             PreviewPanel.currentPanel._update();
             return;
         }
-        const panel = vscode.window.createWebviewPanel('openapiView', 'OpenAPI Preview', column || vscode.ViewColumn.One, {
+        const panel = vscode.window.createWebviewPanel("openapiView", "OpenAPI Preview", column || vscode.ViewColumn.One, {
             enableScripts: true,
             retainContextWhenHidden: true,
-            localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'node_modules')]
+            localResourceRoots: [vscode.Uri.joinPath(extensionUri, "node_modules")],
         });
         PreviewPanel.currentPanel = new PreviewPanel(panel, extensionUri);
     }
@@ -52,37 +53,55 @@ class PreviewPanel {
     }
     revealOperation(method, path, summary) {
         return __awaiter(this, void 0, void 0, function* () {
-            this._panel.webview.postMessage({ command: 'openOperation', method, path, summary });
+            this._panel.webview.postMessage({
+                command: "openOperation",
+                method,
+                path,
+                summary,
+            });
         });
     }
     _update() {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const webview = this._panel.webview;
-            let text = '';
+            let text = "";
             const editor = vscode.window.activeTextEditor;
-            if (editor && (editor.document.languageId === 'json' || editor.document.languageId === 'yaml')) {
+            if (editor &&
+                (editor.document.languageId === "json" ||
+                    editor.document.languageId === "yaml")) {
                 text = editor.document.getText();
             }
             else {
-                // Fallback: If current file is not json/yaml, check if we have a stored content or just show empty/error
-                // For the purpose of this tool, let's assume the user invokes it on the file.
-                // Or we could try to read 'openapi.json' from root.
-                const files = yield vscode.workspace.findFiles('openapi.json', null, 1);
+                const files = yield vscode.workspace.findFiles("openapi.json", null, 1);
                 if (files.length > 0) {
                     const doc = yield vscode.workspace.openTextDocument(files[0]);
                     text = doc.getText();
                 }
                 else {
-                    text = '{}';
+                    text = "{}";
                 }
             }
+            let openApiJson = "{}";
+            try {
+                const parsed = yaml.load(text);
+                if (parsed && typeof parsed === "object") {
+                    // Serialize and escape for safe HTML injection
+                    openApiJson = JSON.stringify(parsed)
+                        .replace(/</g, "\\u003c")
+                        .replace(/\u2028/g, "\\u2028")
+                        .replace(/\u2029/g, "\\u2029");
+                }
+            }
+            catch (e) {
+                console.error("Failed to parse OpenAPI spec:", e);
+            }
             const workspaceFolder = (_a = vscode.workspace.workspaceFolders) === null || _a === void 0 ? void 0 : _a[0];
-            let configRaw = '';
+            let configRaw = "";
             if (workspaceFolder) {
                 configRaw = yield ConfigLoader_1.ConfigLoader.loadRaw(workspaceFolder.uri.fsPath);
             }
-            this._panel.webview.html = (0, HtmlGenerator_1.getHtmlForWebview)(webview, this._extensionUri, text, configRaw);
+            this._panel.webview.html = (0, HtmlGenerator_1.getHtmlForWebview)(webview, this._extensionUri, openApiJson, configRaw);
         });
     }
 }
