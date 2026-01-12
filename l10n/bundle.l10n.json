@@ -1,0 +1,10 @@
+{
+    "Preview": "Preview",
+    "OpenAPI Preview": "OpenAPI Preview",
+    "Select an endpoint": "Select an endpoint from the sidebar to view details.",
+    "No active OpenAPI file": "No active OpenAPI file. Open a JSON/YAML spec first.",
+    "No OpenAPI file found or active.": "No OpenAPI file found or active.",
+    "Failed to parse OpenAPI spec.": "Failed to parse OpenAPI spec.",
+    "Invalid OpenAPI spec: no paths found.": "Invalid OpenAPI spec: no paths found.",
+    "Search for API operation...": "Search for API operation..."
+}

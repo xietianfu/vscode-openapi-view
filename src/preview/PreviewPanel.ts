@@ -30,13 +30,20 @@ export class PreviewPanel {
 
     const panel = vscode.window.createWebviewPanel(
       "openapiView",
-      "OpenAPI Preview",
+      vscode.l10n.t("OpenAPI Preview"),
       column || vscode.ViewColumn.One,
       {
         enableScripts: true,
         retainContextWhenHidden: true,
         localResourceRoots: [vscode.Uri.joinPath(extensionUri, "node_modules")],
       }
+    );
+
+    panel.iconPath = vscode.Uri.joinPath(
+      extensionUri,
+      "resources",
+      "media",
+      "icon.svg"
     );
 
     PreviewPanel.currentPanel = new PreviewPanel(panel, extensionUri);
@@ -79,7 +86,7 @@ export class PreviewPanel {
       text = editor.document.getText();
     } else {
       vscode.window.showErrorMessage(
-        "No active OpenAPI file. Open a JSON/YAML spec first."
+        vscode.l10n.t("No active OpenAPI file. Open a JSON/YAML spec first.")
       );
       text = "{}";
     }

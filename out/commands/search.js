@@ -15,17 +15,19 @@ const yaml = require("js-yaml");
 const PreviewPanel_1 = require("../preview/PreviewPanel");
 function searchInterface(extensionUri) {
     return __awaiter(this, void 0, void 0, function* () {
-        let text = '';
+        let text = "";
         const editor = vscode.window.activeTextEditor;
-        if (editor && (editor.document.languageId === 'json' || editor.document.languageId === 'yaml')) {
+        if (editor &&
+            (editor.document.languageId === "json" ||
+                editor.document.languageId === "yaml")) {
             text = editor.document.getText();
         }
         else {
-            vscode.window.showErrorMessage('No active OpenAPI file. Open a JSON/YAML spec first.');
+            vscode.window.showErrorMessage(vscode.l10n.t("No active OpenAPI file. Open a JSON/YAML spec first."));
             return;
         }
         if (!text) {
-            vscode.window.showErrorMessage('No OpenAPI file found or active.');
+            vscode.window.showErrorMessage(vscode.l10n.t("No OpenAPI file found or active."));
             return;
         }
         let spec;
@@ -33,28 +35,37 @@ function searchInterface(extensionUri) {
             spec = yaml.load(text); // js-yaml handles JSON too
         }
         catch (e) {
-            vscode.window.showErrorMessage('Failed to parse OpenAPI spec.');
+            vscode.window.showErrorMessage(vscode.l10n.t("Failed to parse OpenAPI spec."));
             return;
         }
         if (!spec.paths) {
-            vscode.window.showErrorMessage('Invalid OpenAPI spec: no paths found.');
+            vscode.window.showErrorMessage(vscode.l10n.t("Invalid OpenAPI spec: no paths found."));
             return;
         }
         const items = [];
         for (const [pathKey, pathItem] of Object.entries(spec.paths)) {
-            if (typeof pathItem !== 'object' || !pathItem)
+            if (typeof pathItem !== "object" || !pathItem)
                 continue;
-            const methods = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'];
+            const methods = [
+                "get",
+                "post",
+                "put",
+                "delete",
+                "patch",
+                "options",
+                "head",
+                "trace",
+            ];
             for (const method of methods) {
                 const op = pathItem[method];
                 if (op) {
                     items.push({
                         label: `${method.toUpperCase()} ${pathKey}`,
-                        description: op.summary || op.operationId || '',
+                        description: op.summary || op.operationId || "",
                         detail: op.description,
                         method,
                         path: pathKey,
-                        operationId: op.operationId
+                        operationId: op.operationId,
                     });
                 }
             }
@@ -62,7 +73,7 @@ function searchInterface(extensionUri) {
         const selected = yield vscode.window.showQuickPick(items, {
             matchOnDescription: true,
             matchOnDetail: true,
-            placeHolder: 'Search for API operation...'
+            placeHolder: vscode.l10n.t("Search for API operation..."),
         });
         if (selected) {
             if (!PreviewPanel_1.PreviewPanel.currentPanel) {
@@ -71,7 +82,7 @@ function searchInterface(extensionUri) {
             // Give the webview a moment to initialize if it wasn't open
             setTimeout(() => {
                 var _a;
-                (_a = PreviewPanel_1.PreviewPanel.currentPanel) === null || _a === void 0 ? void 0 : _a.revealOperation(selected.method, selected.path, selected.description || '');
+                (_a = PreviewPanel_1.PreviewPanel.currentPanel) === null || _a === void 0 ? void 0 : _a.revealOperation(selected.method, selected.path, selected.description || "");
             }, 1000);
         }
     });

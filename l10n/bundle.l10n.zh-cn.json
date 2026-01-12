@@ -1,0 +1,10 @@
+{
+    "Preview": "预览",
+    "OpenAPI Preview": "OpenAPI 预览",
+    "Select an endpoint": "从侧边栏选择一个接口以查看详情。",
+    "No active OpenAPI file": "没有活动的 OpenAPI 文件。请先打开 JSON/YAML 规范文件。",
+    "No OpenAPI file found or active.": "未找到活动的 OpenAPI 文件。",
+    "Failed to parse OpenAPI spec.": "解析 OpenAPI 规范失败。",
+    "Invalid OpenAPI spec: no paths found.": "无效的 OpenAPI 规范：未找到 paths。",
+    "Search for API operation...": "搜索 API 接口..."
+}
