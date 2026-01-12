@@ -15,7 +15,17 @@
     "vscode": "^1.73.0"
   },
   "categories": [
+    "Visualization",
     "Other"
+  ],
+  "tags": [
+    "openapi",
+    "swagger",
+    "api",
+    "yaml",
+    "json",
+    "developer-tools",
+    "preview"
   ],
   "activationEvents": [
     "onCommand:openapiView.preview",
