@@ -15,14 +15,14 @@
 
 1. 打开一个 OpenAPI 规范文件（`*.json` 或 `*.yaml`）
 2. 通过命令面板运行：
-   - `OpenAPI: Preview`
-3. 或在编辑器标题栏点击 `OpenAPI: Preview`
+   - `Preview`
+3. 或在编辑器标题栏点击 `Preview`
 
 ### 搜索接口
 
 打开 OpenAPI 文件后，通过命令面板运行：
 
-- `OpenAPI: Search Interfaces`
+- `search`
 
 将弹出列表，可按 summary/path/方法等关键词搜索，选择后会在预览页定位并打开对应接口。
 
@@ -59,8 +59,8 @@ Preview OpenAPI 3.x specs in VS Code and quickly search operations.
 
 - Open an OpenAPI spec file (`*.json` / `*.yaml`)
 - Run:
-  - `OpenAPI: Preview`
-  - `OpenAPI: Search Interfaces`
+  - `Preview`
+  - `Search`
 
 ## Donation
 
