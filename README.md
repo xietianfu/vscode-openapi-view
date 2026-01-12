@@ -30,12 +30,9 @@
 
 如果这个项目对你有帮助，欢迎请我喝杯咖啡：
 
-<!-- ![Alipay](./alipay.jpg)
-![WeChat](./wepay.jpg) -->
-
 <div style="display: flex; justify-content: center; gap: 20px;">
-  <img src="./alipay.jpg" width="400" style="display:inline-block"/>
-  <img src="./wexinpay.jpg" width="400" style="display:inline-block"/>
+  <img src="https://s41.ax1x.com/2026/01/12/pZBtwOe.jpg" width="400" style="display:inline-block"/>
+  <img src="https://s41.ax1x.com/2026/01/12/pZBtdyD.md.jpg" width="400" style="display:inline-block"/>
 </div>
 
 ## License

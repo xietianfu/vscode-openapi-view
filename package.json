@@ -4,6 +4,11 @@
   "description": "Preview OpenAPI 3.0 interfaces",
   "version": "0.0.1",
   "l10n": "./l10n",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourname/openapi-view"
+  },
+  "homepage": "https://github.com/yourname/openapi-view#readme",
   "engines": {
     "vscode": "^1.73.0"
   },
