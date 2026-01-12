@@ -1,0 +1,61 @@
+{
+  "name": "openapi-view",
+  "displayName": "OpenAPI View",
+  "description": "Preview and test OpenAPI 3.0 interfaces",
+  "version": "0.0.1",
+  "l10n": "./l10n",
+  "engines": {
+    "vscode": "^1.73.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:openapiView.preview",
+    "onCommand:openapiView.search"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "openapiView.preview",
+        "title": "%command.preview%"
+      },
+      {
+        "command": "openapiView.search",
+        "title": "%command.search%"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "openapiView.preview",
+          "when": "resourceLangId == json || resourceLangId == yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "openapiView.search",
+          "when": "resourceLangId == json || resourceLangId == yaml",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "16.x",
+    "@types/nunjucks": "^3.2.6",
+    "@types/vscode": "^1.73.0",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "nunjucks": "^3.2.4",
+    "swagger-ui-dist": "^5.0.0"
+  }
+}

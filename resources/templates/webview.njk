@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{ cspSource }} 'unsafe-inline'; script-src 'nonce-{{ nonce }}';">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview</title>
+    <style>
+        {{ styleContent | safe }}
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div id="sidebar-header">
+            <button type="button" id="sidebar-toggle"></button>
+            <input type="text" id="search-input" placeholder="Filter operations..." />
+        </div>
+        <ul id="nav-list"></ul>
+    </div>
+    <div id="sidebar-resizer"></div>
+    <div id="main-content">
+        <div style="text-align: center; margin-top: 50px; opacity: 0.6;">
+            <h2>Preview</h2>
+            <p>Select an endpoint from the sidebar to view details.</p>
+        </div>
+    </div>
+
+    <script nonce="{{ nonce }}">
+        // Inject global data
+        window.spec = {{ openApiContent | safe }};
+        
+        try {
+            {{ configRawContent | safe }}
+        } catch (e) {
+            console.error("Failed to load user config", e);
+            window.openapiConfig = {};
+        }
+
+        // Injected Scripts
+        {{ scriptContent | safe }}
+    </script>
+</body>
+</html>
