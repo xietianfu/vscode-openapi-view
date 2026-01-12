@@ -1,4 +1,4 @@
 {
-    "command.preview": "OpenAPI: 预览",
-    "command.search": "OpenAPI: 搜索接口"
+    "command.preview": "预览",
+    "command.search": "搜索接口"
 }
