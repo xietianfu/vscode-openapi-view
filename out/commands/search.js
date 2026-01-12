@@ -21,11 +21,8 @@ function searchInterface(extensionUri) {
             text = editor.document.getText();
         }
         else {
-            const files = yield vscode.workspace.findFiles('openapi.json', null, 1);
-            if (files.length > 0) {
-                const doc = yield vscode.workspace.openTextDocument(files[0]);
-                text = doc.getText();
-            }
+            vscode.window.showErrorMessage('No active OpenAPI file. Open a JSON/YAML spec first.');
+            return;
         }
         if (!text) {
             vscode.window.showErrorMessage('No OpenAPI file found or active.');

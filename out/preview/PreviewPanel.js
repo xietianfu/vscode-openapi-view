@@ -73,14 +73,8 @@ class PreviewPanel {
                 text = editor.document.getText();
             }
             else {
-                const files = yield vscode.workspace.findFiles("openapi.json", null, 1);
-                if (files.length > 0) {
-                    const doc = yield vscode.workspace.openTextDocument(files[0]);
-                    text = doc.getText();
-                }
-                else {
-                    text = "{}";
-                }
+                vscode.window.showErrorMessage("No active OpenAPI file. Open a JSON/YAML spec first.");
+                text = "{}";
             }
             let openApiJson = "{}";
             try {

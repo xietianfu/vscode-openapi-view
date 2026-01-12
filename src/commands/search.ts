@@ -14,11 +14,8 @@ export async function searchInterface(extensionUri: vscode.Uri) {
     if (editor && (editor.document.languageId === 'json' || editor.document.languageId === 'yaml')) {
         text = editor.document.getText();
     } else {
-         const files = await vscode.workspace.findFiles('openapi.json', null, 1);
-         if (files.length > 0) {
-             const doc = await vscode.workspace.openTextDocument(files[0]);
-             text = doc.getText();
-         }
+        vscode.window.showErrorMessage('No active OpenAPI file. Open a JSON/YAML spec first.');
+        return;
     }
 
     if (!text) {
