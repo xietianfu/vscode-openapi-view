@@ -6,9 +6,9 @@
   "l10n": "./l10n",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourname/openapi-view"
+    "url": "https://github.com/xietianfu/vscode-openapi-view"
   },
-  "homepage": "https://github.com/yourname/openapi-view#readme",
+  "homepage": "https://github.com/xietianfu/vscode-openapi-view#readme",
   "engines": {
     "vscode": "^1.73.0"
   },
