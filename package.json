@@ -3,7 +3,7 @@
   "publisher": "xietf",
   "displayName": "OpenAPI View",
   "description": "Preview OpenAPI 3.0 interfaces",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "l10n": "./l10n",
   "icon": "./icon.png",
   "repository": {

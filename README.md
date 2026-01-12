@@ -65,7 +65,7 @@ Preview OpenAPI 3.x specs in VS Code and quickly search operations.
 
 If you find this helpful, consider supporting the project:
 
-- GitHub Sponsors: replace with your link
+- GitHub Sponsors: [https://github.com/sponsors/xietianfu](https://github.com/sponsors/xietianfu)
 - Alipay/WeChat: add your QR code links in this README
 
 ## License
