@@ -18,6 +18,8 @@
    - `Preview`
 3. 或在编辑器标题栏点击 `Preview`
 
+![preview](https://github.com/xietianfu/vscode-openapi-view/blob/main/resources/media/preview.gif?raw=true)
+
 ### 搜索接口
 
 打开 OpenAPI 文件后，通过命令面板运行：
