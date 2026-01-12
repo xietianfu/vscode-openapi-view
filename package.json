@@ -1,9 +1,11 @@
 {
   "name": "openapi-view",
+  "publisher": "xietf",
   "displayName": "OpenAPI View",
   "description": "Preview OpenAPI 3.0 interfaces",
   "version": "0.0.1",
   "l10n": "./l10n",
+  "icon": "./icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/xietianfu/vscode-openapi-view"

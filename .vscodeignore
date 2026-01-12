@@ -1,16 +1,13 @@
 src/
-**/*.ts
+# **/*.ts
 tsconfig.json
 package-lock.json
 .github/
 .git/
 *.map
-tests/
-scripts/
 /.vscode/
 /.vscodeignore
 /.eslintrc*
 /.prettier* 
-node_modules/
 .trae/
 .vscode/
