@@ -35,7 +35,7 @@
 
 <div style="display: flex; justify-content: center; gap: 20px;">
   <img src="./alipay.jpg" width="400" style="display:inline-block"/>
-  <img src="./wepay.jpg" width="400" style="display:inline-block"/>
+  <img src="./wexinpay.jpg" width="400" style="display:inline-block"/>
 </div>
 
 ## License
