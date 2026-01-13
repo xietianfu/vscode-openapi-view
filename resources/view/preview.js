@@ -249,12 +249,14 @@ function renderDetails(item) {
 
   let html = `
         <div class="api-meta">
-            <div class="api-title">${item.summary}</div>
-            <div style="display: flex; align-items: center;">
+            <div class="api-title copyable" title="Double click to copy">${
+              item.summary
+            }</div>
+            <div  title="Double click to copy" style="display: flex; align-items: center;">
                 <span class="method-badge method-${
                   item.method
-                }" style="font-size: 1em; padding: 5px 10px;">${item.method.toUpperCase()}</span>
-                <span class="api-path">${item.path}</span>
+                } copyable" style="font-size: 1em; padding: 5px 10px;">${item.method.toUpperCase()}</span>
+                <span class="api-path copyable">${item.path}</span>
             </div>
             ${
               item.description
@@ -270,10 +272,10 @@ function renderDetails(item) {
     html += `<table><thead><tr><th style="width: 20%">Name</th><th style="width: 15%">In</th><th style="width: 10%">Required</th><th>Description</th></tr></thead><tbody>`;
     op.parameters.forEach((p) => {
       html += `<tr>
-                <td><strong>${p.name}</strong></td>
-                <td>${p.in}</td>
-                <td>${p.required ? "Yes" : "No"}</td>
-                <td>${p.description || "-"}</td>
+                <td class="copyable"><strong>${p.name}</strong></td>
+                <td class="copyable">${p.in}</td>
+                <td class="copyable">${p.required ? "Yes" : "No"}</td>
+                <td class="copyable">${p.description || "-"}</td>
             </tr>`;
     });
     html += `</tbody></table>`;
@@ -302,8 +304,8 @@ function renderDetails(item) {
     for (const code in op.responses) {
       html += `<div style="margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
                 <div style="padding: 8px 10px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
-                    <span style="font-weight: bold; font-family: monospace; font-size: 1.1em;">${code}</span>
-                    <span style="opacity: 0.8;">${
+                    <span class="copyable" style="font-weight: bold; font-family: monospace; font-size: 1.1em;">${code}</span>
+                    <span class="copyable" style="opacity: 0.8;">${
                       op.responses[code].description || ""
                     }</span>
                 </div>
@@ -377,13 +379,15 @@ function renderSchemaTable(schema, rootName = "root") {
     const rowClass = parentId ? `child-of-${parentId}` : "";
 
     rows += `<tr class="schema-row ${rowClass}" id="${id}" data-level="${level}">
-            <td>
+            <td class="copyable">
                 ${indent}${toggle}
                 <span class="schema-row-name">${name}</span>
             </td>
-            <td class="schema-row-type">${typeDisplay}</td>
-            <td class="schema-row-required">${required ? "Required" : ""}</td>
-            <td>${obj.description || "-"}</td>
+            <td class="schema-row-type copyable">${typeDisplay}</td>
+            <td class="schema-row-required copyable">${
+              required ? "Required" : ""
+            }</td>
+            <td class="copyable">${obj.description || "-"}</td>
         </tr>`;
 
     if (hasChildren && !isCircular) {
@@ -533,6 +537,45 @@ window.addEventListener("message", (event) => {
         item.scrollIntoView();
         break;
       }
+    }
+  }
+});
+
+// Toast Notification
+const toast = document.createElement("div");
+toast.className = "toast";
+toast.textContent = "Copied to clipboard!";
+document.body.appendChild(toast);
+
+function showToast(message = "Copied to clipboard!") {
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2000);
+}
+
+document.addEventListener("dblclick", (e) => {
+  const target = e.target.closest(".copyable");
+  if (target) {
+    let text = "";
+    // Special handling for schema rows to avoid copying toggle arrow
+    const schemaName = target.querySelector(".schema-row-name");
+    if (schemaName && target.tagName === "TD") {
+      text = schemaName.textContent;
+    } else {
+      const clone = target.cloneNode(true);
+      const toggles = clone.querySelectorAll(".schema-toggle");
+      toggles.forEach((t) => t.remove());
+      text = clone.innerText.trim();
+    }
+
+    if (text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast();
+      });
+      e.preventDefault();
+      window.getSelection().removeAllRanges();
     }
   }
 });

@@ -267,3 +267,40 @@ th {
   margin-right: 2px;
   vertical-align: middle;
 }
+
+.copyable {
+  cursor: pointer;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.copyable:hover {
+  background-color: var(--hover-bg);
+  border-radius: 4px;
+}
+
+td.copyable:hover {
+  background-color: var(--hover-bg);
+  border-radius: 0;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--vscode-notifications-background);
+  color: var(--vscode-notifications-foreground);
+  padding: 10px 20px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  border: 1px solid var(--vscode-notifications-border);
+}
+
+.toast.show {
+  opacity: 1;
+}
