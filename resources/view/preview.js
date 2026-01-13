@@ -246,6 +246,7 @@ function filterNavigation(query) {
 
 function renderDetails(item) {
   const op = window.spec.paths[item.path][item.method];
+  const uid = Math.random().toString(36).slice(2);
 
   let html = `
         <div class="api-meta">
@@ -268,7 +269,10 @@ function renderDetails(item) {
 
   // Parameters
   if (op.parameters && op.parameters.length > 0) {
-    html += `<div class="section-title">Parameters</div>`;
+    html += `<div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Parameters</span>
+      <button id="params-copy-${uid}" style="padding:4px 8px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);border-radius:4px;cursor:pointer;">Copy JSON</button>
+    </div>`;
     html += `<table><thead><tr><th style="width: 20%">Name</th><th style="width: 15%">In</th><th style="width: 10%">Required</th><th>Description</th></tr></thead><tbody>`;
     op.parameters.forEach((p) => {
       html += `<tr>
@@ -283,7 +287,10 @@ function renderDetails(item) {
 
   // Request Body
   if (op.requestBody) {
-    html += `<div class="section-title">Request Body</div>`;
+    html += `<div class="section-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Request Body</span>
+      <button id="req-copy-${uid}" style="padding:4px 8px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);border-radius:4px;cursor:pointer;">Copy JSON</button>
+    </div>`;
     html += `<p>${op.requestBody.description || ""}</p>`;
     const content = op.requestBody.content;
     if (content) {
@@ -303,11 +310,14 @@ function renderDetails(item) {
 
     for (const code in op.responses) {
       html += `<div style="margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-                <div style="padding: 8px 10px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
+                <div style="padding: 8px 10px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; justify-content: space-between;">
+                  <div style="display:flex;align-items:center;gap:10px;">
                     <span class="copyable" style="font-weight: bold; font-family: monospace; font-size: 1.1em;">${code}</span>
                     <span class="copyable" style="opacity: 0.8;">${
                       op.responses[code].description || ""
                     }</span>
+                  </div>
+                  <button id="resp-copy-${uid}-${code}" style="padding:4px 8px;border:1px solid var(--border-color);background:transparent;color:var(--text-color);border-radius:4px;cursor:pointer;">Copy JSON</button>
                 </div>
                 <div style="padding: 10px;">
                     ${renderResponseSchema(op.responses[code])}
@@ -317,6 +327,65 @@ function renderDetails(item) {
   }
 
   mainContent.innerHTML = html;
+  const paramsBtn = document.getElementById(`params-copy-${uid}`);
+  if (paramsBtn) {
+    paramsBtn.addEventListener("click", () => {
+      const data = Array.isArray(op.parameters)
+        ? op.parameters.map((p) => ({
+            name: p.name,
+            in: p.in,
+            required: !!p.required,
+            description: p.description || "",
+          }))
+        : [];
+      const text = JSON.stringify({ parameters: data }, null, 2);
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("参数 JSON 已复制");
+      });
+    });
+  }
+  const reqBtn = document.getElementById(`req-copy-${uid}`);
+  if (reqBtn) {
+    reqBtn.addEventListener("click", () => {
+      const c = op.requestBody && op.requestBody.content;
+      if (!c) {
+        showToast("无可复制内容");
+        return;
+      }
+      const obj = {};
+      for (const t in c) {
+        const s = c[t] && c[t].schema;
+        if (s) obj[t] = resolveDeep(s);
+      }
+      const text = JSON.stringify(obj, null, 2);
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("请求体 JSON 已复制");
+      });
+    });
+  }
+  if (op.responses) {
+    for (const code in op.responses) {
+      const btn = document.getElementById(`resp-copy-${uid}-${code}`);
+      if (btn) {
+        btn.addEventListener("click", () => {
+          const r = op.responses[code];
+          let obj = {};
+          if (r && r.content) {
+            for (const t in r.content) {
+              const s = r.content[t] && r.content[t].schema;
+              if (s) obj[t] = resolveDeep(s);
+            }
+          } else {
+            obj = { description: r && r.description ? r.description : "" };
+          }
+          const text = JSON.stringify(obj, null, 2);
+          navigator.clipboard.writeText(text).then(() => {
+            showToast(`响应 ${code} 的 JSON 已复制`);
+          });
+        });
+      }
+    }
+  }
   mainContent.scrollTop = 0;
 }
 
@@ -343,8 +412,8 @@ function renderSchemaTable(schema, rootName = "root") {
     resolved.type !== "array" &&
     !resolved.properties
   ) {
-    return `<div style="background: var(--code-bg); padding: 10px; border-radius: 4px; font-family: monospace;">
-            <span style="color: #4ec9b0;">${resolved.type || "unknown"}</span> 
+    return `<div style="background: var(--code-bg); padding: 10px; border-radius: 4px; ">
+            <span>${resolved.type || "unknown"}</span> 
             ${resolved.format ? `(${resolved.format})` : ""}
             ${resolved.description ? `- ${resolved.description}` : ""}
          </div>`;
