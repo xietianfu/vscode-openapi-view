@@ -284,6 +284,30 @@ td.copyable:hover {
   border-radius: 0;
 }
 
+.copy-children-btn {
+  display: none;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 0.85em;
+  user-select: none;
+  vertical-align: middle;
+  padding: 2px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background: var(--hover-bg);
+  color: var(--text-color);
+}
+
+.schema-row:hover .copy-children-btn {
+  display: inline-block;
+}
+
+.copy-children-btn:hover {
+  opacity: 1;
+  background: var(--active-bg);
+  border-color: var(--vscode-focusBorder);
+}
+
 .toast {
   position: fixed;
   bottom: 20px;

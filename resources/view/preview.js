@@ -4,6 +4,7 @@ let isResizing = false;
 let lastSidebarWidth = 300;
 const SIDEBAR_WIDTH_KEY = "openapiView.sidebarWidth";
 const SIDEBAR_COLLAPSED_KEY = "openapiView.sidebarCollapsed";
+const schemaMap = new Map();
 
 function init() {
   navList = document.getElementById("nav-list");
@@ -245,6 +246,7 @@ function filterNavigation(query) {
 }
 
 function renderDetails(item) {
+  schemaMap.clear();
   const op = window.spec.paths[item.path][item.method];
   const uid = Math.random().toString(36).slice(2);
 
@@ -445,12 +447,20 @@ function renderSchemaTable(schema, rootName = "root") {
         ? `<span class="schema-toggle" data-id="${id}">▼</span>`
         : `<span class="schema-toggle hidden">▼</span>`;
 
+    if (hasChildren) {
+      schemaMap.set(id, obj);
+    }
+    const copyBtn = hasChildren
+      ? `<span class="copy-children-btn" data-schema-id="${id}" title="Init Params">Init Params</span>`
+      : "";
+
     const rowClass = parentId ? `child-of-${parentId}` : "";
 
     rows += `<tr class="schema-row ${rowClass}" id="${id}" data-level="${level}">
             <td class="copyable">
                 ${indent}${toggle}
                 <span class="schema-row-name">${name}</span>
+                ${copyBtn}
             </td>
             <td class="schema-row-type copyable">${typeDisplay}</td>
             <td class="schema-row-required copyable">${
@@ -510,8 +520,137 @@ document.addEventListener("click", (e) => {
   if (e.target.classList.contains("schema-toggle")) {
     const id = e.target.dataset.id;
     if (id) toggleRow(id);
+  } else if (e.target.classList.contains("copy-children-btn")) {
+    const id = e.target.dataset.schemaId;
+    const schema = schemaMap.get(id);
+    if (schema) {
+      const text = buildChildrenSnippetWithComments(schema);
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("子节点 JSON 已复制");
+      });
+    }
+    e.stopPropagation();
   }
 });
+
+function buildChildrenExample(node) {
+  if (!node || typeof node !== "object") return null;
+  if (node._circular) return null;
+  if (node.type === "object" && node.properties) {
+    const obj = {};
+    for (const key in node.properties) {
+      obj[key] = buildExampleValue(node.properties[key]);
+    }
+    return obj;
+  }
+  if (node.type === "array" && node.items) {
+    return [buildExampleValue(node.items)];
+  }
+  return buildExampleValue(node);
+}
+
+function buildExampleValue(node) {
+  if (!node || typeof node !== "object") return null;
+  if (node._circular) return null;
+  if (node.enum && Array.isArray(node.enum) && node.enum.length > 0) {
+    return node.enum[0];
+  }
+  const t = node.type || "object";
+  if (t === "object") {
+    if (node.properties) {
+      const o = {};
+      for (const k in node.properties) {
+        o[k] = buildExampleValue(node.properties[k]);
+      }
+      return o;
+    }
+    return {};
+  }
+  if (t === "array") {
+    return [buildExampleValue(node.items || {})];
+  }
+  if (t === "string") {
+    return node.example !== undefined ? node.example : "";
+  }
+  if (t === "integer" || t === "number") {
+    return node.example !== undefined ? node.example : 0;
+  }
+  if (t === "boolean") {
+    return node.example !== undefined ? node.example : false;
+  }
+  if (t === "null") {
+    return null;
+  }
+  return null;
+}
+
+function pad(level) {
+  return "  ".repeat(level);
+}
+
+function formatPrimitive(value) {
+  if (value === null) return "null";
+  if (typeof value === "string") return JSON.stringify(value);
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  if (Array.isArray(value)) return JSON.stringify(value, null, 2);
+  if (typeof value === "object") return JSON.stringify(value, null, 2);
+  return "null";
+}
+
+function snippetForNode(node, level) {
+  if (!node || typeof node !== "object" || node._circular) return "null";
+  const type = node.type || "object";
+  if (type === "object" && node.properties) {
+    let s = "{\n";
+    for (const key in node.properties) {
+      const prop = node.properties[key];
+      const comment = prop.description
+        ? `${pad(level + 1)}/** ${prop.description} */\n`
+        : "";
+      s += comment;
+      s += `${pad(level + 1)}${JSON.stringify(key)}: ${snippetForNode(
+        prop,
+        level + 1
+      )},\n`;
+    }
+    s += `${pad(level)}}`;
+    return s;
+  }
+  if (type === "array" && node.items) {
+    let s = "[\n";
+    const itemSnippet = snippetForNode(node.items, level + 1);
+    s += `${pad(level + 1)}${itemSnippet}\n`;
+    s += `${pad(level)}]`;
+    return s;
+  }
+  return formatPrimitive(buildExampleValue(node));
+}
+
+function buildChildrenSnippetWithComments(node) {
+  if (!node || typeof node !== "object") return "{}";
+  if (node._circular) return "null";
+  if (node.type === "object" && node.properties) {
+    let s = "{\n";
+    for (const key in node.properties) {
+      const prop = node.properties[key];
+      const comment = prop.description
+        ? `${pad(1)}/** ${prop.description} */\n`
+        : "";
+      s += comment;
+      s += `${pad(1)}${JSON.stringify(key)}: ${snippetForNode(prop, 1)},\n`;
+    }
+    s += "}";
+    return s;
+  }
+  if (node.type === "array" && node.items) {
+    let s = "[\n";
+    s += `${pad(1)}${snippetForNode(node.items, 1)}\n`;
+    s += "]";
+    return s;
+  }
+  return snippetForNode(node, 0);
+}
 
 function hideChildren(parentId) {
   const children = document.querySelectorAll(`.child-of-${parentId}`);
